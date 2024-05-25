@@ -160,6 +160,7 @@ public class PathFinder extends Application {
         stage.show();
     }
     private void createConnection() {
+        //todo window to enter name and time, visual graphic for a connection
         String name = "test";
         int time = 10;
         locationGraph.connect(p1,p2,name,time);
