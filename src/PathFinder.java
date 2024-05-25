@@ -57,6 +57,7 @@ public class PathFinder extends Application {
         tools.setMaxHeight(sceneHeight);
         tools.setMaxWidth(sceneWidth);
         //tools.setStyle("-fx-background-color: red");
+        center.setId("outputArea");
 
         menu.setId("menuFile");
         MenuBar menuBar = new MenuBar();
@@ -127,6 +128,14 @@ public class PathFinder extends Application {
             center.setOnMouseClicked(new NewPlaceHandler());
         });
         newConnection = new Button("New Connection");
+        newConnection.setOnAction(event -> {
+            if(p1 != null && p2 != null) {
+                createConnection();
+            }
+            else {
+                notTwoSelectedError();
+            }
+        });
         changeConnection = new Button("Change Connection");
         findPath.setId("btnFindPath");
         showConnection.setId("btnShowConnection");
@@ -149,6 +158,18 @@ public class PathFinder extends Application {
             }
         });
         stage.show();
+    }
+    private void createConnection() {
+        String name = "test";
+        int time = 10;
+        locationGraph.connect(p1,p2,name,time);
+    }
+    private void notTwoSelectedError() {
+        Alert error = new Alert(Alert.AlertType.ERROR);
+        error.setTitle("Error!");
+        error.setHeaderText(null);
+        error.setContentText("Two places must be selected!");
+        error.showAndWait();
     }
     private class PlaceClickedHandler implements EventHandler<MouseEvent> {
         @Override
@@ -200,6 +221,7 @@ public class PathFinder extends Application {
             p.setOnMouseClicked(new PlaceClickedHandler());
             center.getChildren().addAll(p);
             locationGraph.add(p);
+            p.setId(p.getName());
             changed = true;
         }
     }
@@ -219,6 +241,7 @@ public class PathFinder extends Application {
                 Place p = new Place(x,y,name);
                 p.setOnMouseClicked(new PlaceClickedHandler());
                 locationGraph.add(p);
+                p.setId(p.getName());
                 center.getChildren().add(p);
             }
             String line;
