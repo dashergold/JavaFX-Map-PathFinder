@@ -163,15 +163,22 @@ public class PathFinder extends Application {
     }
     private void createConnection(Place p1, Place p2) {
         //todo window to enter name and time, visual graphic for a connection
-        //String name = "test";
-        //int time = 10;
-        ConnectionInterface dialog = new ConnectionInterface(p1,p2);
-        Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWait();
-        if(res.isPresent()) {
-            ConnectionInterface.PlaceResult pr = res.get();
-            locationGraph.connect(p1, p2, pr.getName(), pr.getTime());
-            ConnectionLine c = new ConnectionLine(p1.getCenterX(), p1.getCenterY(), p2.getCenterX(), p2.getCenterY());
-            center.getChildren().add(c);
+
+        if(locationGraph.getEdgeBetween(p1,p2) == null) {
+            ConnectionInterface dialog = new ConnectionInterface(p1, p2);
+            Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWaitResult();
+            if (res.isPresent()) {
+                ConnectionInterface.PlaceResult pr = res.get();
+                locationGraph.connect(p1, p2, pr.getName(), pr.getTime());
+                ConnectionLine c = new ConnectionLine(p1.getCenterX(), p1.getCenterY(), p2.getCenterX(), p2.getCenterY());
+                center.getChildren().add(c);
+            }
+        } else {
+            Alert alreadyConnected = new Alert(Alert.AlertType.ERROR);
+            alreadyConnected.setHeaderText(null);
+            alreadyConnected.setTitle("Error");
+            alreadyConnected.setContentText(p1.getName()+ " and " + p2.getName() + " are already connected!");
+            alreadyConnected.showAndWait();
         }
 
     }
