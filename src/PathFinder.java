@@ -16,6 +16,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -80,6 +81,7 @@ public class PathFinder extends Application {
         openItem.setOnAction(event -> {
             if(!changed) {
                 openFile("europa.graph");
+                //openFile("saveTest.txt");
             }
             else {
                 if(unsavedChangesWarning(event)) {
@@ -130,7 +132,7 @@ public class PathFinder extends Application {
         newConnection = new Button("New Connection");
         newConnection.setOnAction(event -> {
             if(p1 != null && p2 != null) {
-                createConnection();
+                createConnection(p1,p2);
             }
             else {
                 notTwoSelectedError();
@@ -159,12 +161,35 @@ public class PathFinder extends Application {
         });
         stage.show();
     }
-    private void createConnection() {
+    private void createConnection(Place p1, Place p2) {
         //todo window to enter name and time, visual graphic for a connection
-        String name = "test";
-        int time = 10;
-        locationGraph.connect(p1,p2,name,time);
+        //String name = "test";
+        //int time = 10;
+        ConnectionInterface dialog = new ConnectionInterface(p1,p2);
+        Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWait();
+        if(res.isPresent()) {
+            ConnectionInterface.PlaceResult pr = res.get();
+            locationGraph.connect(p1, p2, pr.getName(), pr.getTime());
+            ConnectionLine c = new ConnectionLine(p1.getCenterX(), p1.getCenterY(), p2.getCenterX(), p2.getCenterY());
+            center.getChildren().add(c);
+        }
+
     }
+    private class PlaceResult {
+        private final String name;
+        private final int time;
+        public PlaceResult(String name, int time) {
+            this.name = name;
+            this.time = time;
+        }
+        public String getName() {
+            return name;
+        }
+        public int getTime() {
+            return time;
+        }
+    }
+
     private void notTwoSelectedError() {
         Alert error = new Alert(Alert.AlertType.ERROR);
         error.setTitle("Error!");
@@ -259,6 +284,7 @@ public class PathFinder extends Application {
                 }
                 if(locationGraph.getEdgeBetween(from,to) == null) {
                     locationGraph.connect(from, to, edgeData[2], Integer.parseInt(edgeData[3]));
+                    center.getChildren().add(new ConnectionLine(from.getCenterX(),from.getCenterY(),to.getCenterX(),to.getCenterY()));
                 }
             }
             reader.close();
