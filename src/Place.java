@@ -39,4 +39,9 @@ public class Place extends Circle {
         group.getChildren().addAll(this,text);
         return group;
     }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
 }

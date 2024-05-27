@@ -122,6 +122,14 @@ public class PathFinder extends Application {
 
         FlowPane buttons = new FlowPane();
         findPath = new Button("Find Path");
+        findPath.setOnAction(event -> {
+            if(locationGraph.pathExists(p1,p2)) {
+                displayPath();
+            }
+            else {
+                error("No path between " + p1.getName() + " and "+p2.getName()+"!");
+            }
+        });
         showConnection = new Button("Show Connection");
         showConnection.setOnAction(event -> {
             if(p1 != null && p2 != null) {
@@ -186,6 +194,10 @@ public class PathFinder extends Application {
             }
         });
         stage.show();
+    }
+    private void displayPath() {
+        PathInterface pi = new PathInterface(p1,p2, this);
+        pi.showAndWait();
     }
     private void alterConnection() {
         ConnectionInterface dialog = new ConnectionInterface(p1,p2,this,true);
