@@ -250,7 +250,7 @@ public class PathFinder extends Application {
         if(res.isPresent()) {
             Place p =  new Place(x,y,tid.getEditor().getText());
             p.setOnMouseClicked(new PlaceClickedHandler());
-            center.getChildren().addAll(p);
+            center.getChildren().addAll(p.getDisplay());
             locationGraph.add(p);
             p.setId(p.getName());
             changed = true;
@@ -273,7 +273,7 @@ public class PathFinder extends Application {
                 p.setOnMouseClicked(new PlaceClickedHandler());
                 locationGraph.add(p);
                 p.setId(p.getName());
-                center.getChildren().add(p);
+                center.getChildren().add(p.getDisplay());
             }
             String line;
             while ((line = reader.readLine()) != null){
