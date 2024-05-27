@@ -71,7 +71,7 @@ public class PathFinder extends Application {
                 openImage("file:europa.gif");
             }
             else {
-                if(unsavedChangesWarning(event)) {
+                if(unsavedChangesWarning("Unsaved changes, continue anyway?")) {
                     changed = false;
                     openImage("file:europa.gif");
                 }
@@ -84,7 +84,7 @@ public class PathFinder extends Application {
                 //openFile("saveTest.txt");
             }
             else {
-                if(unsavedChangesWarning(event)) {
+                if(unsavedChangesWarning("Unsaved changes, continue anyway?")) {
                     changed=false;
                     openFile("europa.graph");
                 }
@@ -109,7 +109,7 @@ public class PathFinder extends Application {
             if (!changed) {
                 System.exit(0);
             }
-            if (unsavedChangesExitWarning()) {
+            if (unsavedChangesWarning("Unsaved changes, exit anyway?")) {
                 System.exit(0);
             }
         });
@@ -123,6 +123,19 @@ public class PathFinder extends Application {
         FlowPane buttons = new FlowPane();
         findPath = new Button("Find Path");
         showConnection = new Button("Show Connection");
+        showConnection.setOnAction(event -> {
+            if(p1 != null && p2 != null) {
+                if(locationGraph.getEdgeBetween(p1,p2) == null) {
+                    error("No connection between " + p1.getName() + " and "+p2.getName()+"!");
+                }
+                else {
+                    displayConnection();
+                }
+            }
+            else {
+                error("Two places must be selected!");
+            }
+        });
         newPlace = new Button("New Place");
         newPlace.setOnAction(event -> {
             scene.setCursor(Cursor.CROSSHAIR);
@@ -135,7 +148,7 @@ public class PathFinder extends Application {
                 createConnection(p1,p2);
             }
             else {
-                notTwoSelectedError();
+                error("Two places must be selected!");
             }
         });
         changeConnection = new Button("Change Connection");
@@ -154,16 +167,18 @@ public class PathFinder extends Application {
         stage.setTitle("PathFinder");
         stage.setOnCloseRequest(event -> {
             if(changed) {
-                if(!unsavedChangesExitWarning()) {
+                if(!unsavedChangesWarning("Unsaved changes, exit anyway?")) {
                     event.consume();
                 }
             }
         });
         stage.show();
     }
+    private void displayConnection() {
+        ConnectionInterface ci = new ConnectionInterface(p1,p2,this);
+        ci.showAndWait();
+    }
     private void createConnection(Place p1, Place p2) {
-        //todo window to enter name and time, visual graphic for a connection
-
         if(locationGraph.getEdgeBetween(p1,p2) == null) {
             ConnectionInterface dialog = new ConnectionInterface(p1, p2);
             Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWaitResult();
@@ -174,36 +189,19 @@ public class PathFinder extends Application {
                 center.getChildren().add(c);
             }
         } else {
-            Alert alreadyConnected = new Alert(Alert.AlertType.ERROR);
-            alreadyConnected.setHeaderText(null);
-            alreadyConnected.setTitle("Error");
-            alreadyConnected.setContentText(p1.getName()+ " and " + p2.getName() + " are already connected!");
-            alreadyConnected.showAndWait();
+            error(p1.getName()+ " and " + p2.getName() + " are already connected!");
         }
 
     }
-    private class PlaceResult {
-        private final String name;
-        private final int time;
-        public PlaceResult(String name, int time) {
-            this.name = name;
-            this.time = time;
-        }
-        public String getName() {
-            return name;
-        }
-        public int getTime() {
-            return time;
-        }
-    }
-
-    private void notTwoSelectedError() {
+    private void error(String content) {
         Alert error = new Alert(Alert.AlertType.ERROR);
         error.setTitle("Error!");
         error.setHeaderText(null);
-        error.setContentText("Two places must be selected!");
+        error.setContentText(content);
         error.showAndWait();
     }
+
+
     private class PlaceClickedHandler implements EventHandler<MouseEvent> {
         @Override
         public void handle(MouseEvent event) {
@@ -353,32 +351,21 @@ public class PathFinder extends Application {
         }
         return result;
     }
-    private boolean unsavedChangesWarning(ActionEvent event) {
+    private boolean unsavedChangesWarning(String content) {
         Alert unsavedChangeWarning = new Alert(Alert.AlertType.CONFIRMATION);
         unsavedChangeWarning.setTitle("Warning!");
         unsavedChangeWarning.setHeaderText(null);
-        unsavedChangeWarning.setContentText("Unsaved changes, continue anyway?");
+        unsavedChangeWarning.setContentText(content);
         Optional<ButtonType> res = unsavedChangeWarning.showAndWait();
         if(res.isPresent() && res.get().equals(ButtonType.CANCEL)) {
-            event.consume();
             return false;
         }
         else {
             return true;
         }
     }
-    private boolean unsavedChangesExitWarning() {
-        Alert unsavedChangeWarning = new Alert(Alert.AlertType.CONFIRMATION);
-        unsavedChangeWarning.setTitle("Warning!");
-        unsavedChangeWarning.setHeaderText(null);
-        unsavedChangeWarning.setContentText("Unsaved changes, exit anyway?");
-        Optional<ButtonType> res = unsavedChangeWarning.showAndWait();
-        if(res.isPresent() && res.get().equals(ButtonType.CANCEL)) {
-            return false;
-        }
-        else {
-            return true;
-        }
+    public Graph<Place> getLocationGraph() {
+        return this.locationGraph;
     }
 
 
