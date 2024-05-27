@@ -145,13 +145,26 @@ public class PathFinder extends Application {
         newConnection = new Button("New Connection");
         newConnection.setOnAction(event -> {
             if(p1 != null && p2 != null) {
-                createConnection(p1,p2);
+                createConnection();
             }
             else {
                 error("Two places must be selected!");
             }
         });
         changeConnection = new Button("Change Connection");
+        changeConnection.setOnAction(event -> {
+            if(p1 != null && p2 != null) {
+                if(locationGraph.getEdgeBetween(p1,p2) == null) {
+                    error("No connection between " + p1.getName() + " and "+p2.getName()+"!");
+                }
+                else {
+                    alterConnection();
+                }
+            }
+            else {
+                error("Two places must be selected!");
+            }
+        });
         findPath.setId("btnFindPath");
         showConnection.setId("btnShowConnection");
         newPlace.setId("btnNewPlace");
@@ -174,11 +187,20 @@ public class PathFinder extends Application {
         });
         stage.show();
     }
+    private void alterConnection() {
+        ConnectionInterface dialog = new ConnectionInterface(p1,p2,this,true);
+        Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWaitResult();
+        if(res.isPresent()) {
+            ConnectionInterface.PlaceResult pr = res.get();
+            locationGraph.setConnectionWeight(p1,p2,pr.getTime());
+            changed = true;
+        }
+    }
     private void displayConnection() {
         ConnectionInterface ci = new ConnectionInterface(p1,p2,this);
         ci.showAndWait();
     }
-    private void createConnection(Place p1, Place p2) {
+    private void createConnection() {
         if(locationGraph.getEdgeBetween(p1,p2) == null) {
             ConnectionInterface dialog = new ConnectionInterface(p1, p2);
             Optional<ConnectionInterface.PlaceResult> res = dialog.showAndWaitResult();
@@ -187,6 +209,7 @@ public class PathFinder extends Application {
                 locationGraph.connect(p1, p2, pr.getName(), pr.getTime());
                 ConnectionLine c = new ConnectionLine(p1.getCenterX(), p1.getCenterY(), p2.getCenterX(), p2.getCenterY());
                 center.getChildren().add(c);
+                changed = true;
             }
         } else {
             error(p1.getName()+ " and " + p2.getName() + " are already connected!");
@@ -227,7 +250,6 @@ public class PathFinder extends Application {
     private class NewPlaceHandler implements EventHandler<MouseEvent> {
         @Override
         public void handle(MouseEvent event) {
-            //todo fix the cancel button work PLEASEXDDD
             double x = event.getX();
             double y = event.getY();
             newPlace(x,y);

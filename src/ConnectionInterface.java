@@ -1,6 +1,7 @@
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 
+import java.nio.file.Path;
 import java.util.Optional;
 
 public class ConnectionInterface extends Alert{
@@ -51,9 +52,31 @@ public class ConnectionInterface extends Alert{
         grid.add(new Label("Time:"),0,1);
         grid.add(timeField,1,1);
         getDialogPane().setContent(grid);
-
-
     }
+    public ConnectionInterface(Place p1, Place p2, PathFinder pathFinder, boolean unusedBool) {
+        super(AlertType.CONFIRMATION);
+        this.locationGraph = pathFinder.getLocationGraph();
+        Edge<Place> edge = locationGraph.getEdgeBetween(p1,p2);
+        setTitle("Connection");
+        setHeaderText("Connection from " +p1.getName() + " to " +p2.getName());
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        nameField = new TextField(edge.getName());
+        nameField.setEditable(false);
+        timeField = new TextField();
+        grid.add(new Label("Name:"),0,0);
+        grid.add(nameField,1,0);
+        grid.add(new Label("Time:"),0,1);
+        grid.add(timeField,1,1);
+        getDialogPane().setContent(grid);
+        Button okButton = (Button) getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setDisable(true);
+        timeField.textProperty().addListener((obs, oldV, newV) ->
+                okButton.setDisable(newV.trim().isEmpty() || !isValidTime(newV))
+        );
+    }
+
     public Optional<PlaceResult> showAndWaitResult() {
         Optional<ButtonType> result = showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
