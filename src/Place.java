@@ -15,6 +15,7 @@ public class Place extends Circle {
         this.y = y;
         this.name = name;
         super.setFill(Color.BLUE);
+        this.setId(name);
 
     }
     public String getName() {
@@ -27,19 +28,13 @@ public class Place extends Circle {
         return y;
     }
     public void paintSelected() {
+        System.out.println("Painting " + this.getId() + " as selected (RED).");
         this.setFill(Color.RED);
     }
     public void paintUnselected() {
+       // System.out.println("Painting " + this.getId() + " as unselected (BLUE).");
         this.setFill(Color.BLUE);
     }
-    public Group getDisplay() {
-        Text text = new Text(this.x+5,this.y+20,this.name);
-        text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        Group group = new Group();
-        group.getChildren().addAll(this,text);
-        return group;
-    }
-
     @Override
     public String toString() {
         return this.name;

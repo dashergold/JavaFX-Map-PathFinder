@@ -124,7 +124,12 @@ public class ListGraph<T> implements Graph<T>{
             return null;
         }
         LinkedList<LinkedList<Edge<T>>> paths = new LinkedList<>();
-        paths.addLast( new LinkedList<>(getEdgesFrom(from)));
+        for(Edge<T> e: getEdgesFrom(from)) {
+            var path = new LinkedList<Edge<T>>();
+            path.add(e);
+            paths.add(path);
+        }
+        //paths.addLast( new LinkedList<>(getEdgesFrom(from)));
         HashSet<T> visited = new HashSet<>();
         var result = BFS(to, paths, visited);
         return result;

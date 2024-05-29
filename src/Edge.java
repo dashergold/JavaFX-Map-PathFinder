@@ -40,6 +40,6 @@ public class Edge<T> {
         return Objects.hash(destination, name);
     }
     public String toString() {
-        return "to " + destination +" with "+ name +" takes "+ weight;
+        return "to " + destination +" by "+ name +" takes "+ weight;
     }
 }

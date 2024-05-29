@@ -6,9 +6,8 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
-import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
+import javafx.scene.*;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -18,6 +17,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Shape;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import jdk.jshell.spi.ExecutionControl;
@@ -25,6 +31,9 @@ import jdk.jshell.spi.ExecutionControl;
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PathFinder extends Application {
     private Graph<Place> locationGraph = new ListGraph<>();
@@ -44,6 +53,8 @@ public class PathFinder extends Application {
     private Button changeConnection;
     private Place p1 = null;
     private Place p2 = null;
+    private boolean allowClicks = false;
+
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -52,6 +63,7 @@ public class PathFinder extends Application {
         FlowPane tools = new FlowPane(Orientation.VERTICAL);
         root.setTop(tools);
         root.setCenter(center);
+        center.setOnMouseClicked(new NewPlaceHandler());
         root.setStyle("-fx-font-size: 14;");
         scene = new Scene(root,sceneWidth,sceneHeight);
 
@@ -107,6 +119,7 @@ public class PathFinder extends Application {
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(event -> {
             if (!changed) {
+                //todo this has to be changed in order to hand in
                 System.exit(0);
             }
             if (unsavedChangesWarning("Unsaved changes, exit anyway?")) {
@@ -146,9 +159,10 @@ public class PathFinder extends Application {
         });
         newPlace = new Button("New Place");
         newPlace.setOnAction(event -> {
+            this.allowClicks = true;
             scene.setCursor(Cursor.CROSSHAIR);
             newPlace.setDisable(true);
-            center.setOnMouseClicked(new NewPlaceHandler());
+
         });
         newConnection = new Button("New Connection");
         newConnection.setOnAction(event -> {
@@ -177,7 +191,7 @@ public class PathFinder extends Application {
         showConnection.setId("btnShowConnection");
         newPlace.setId("btnNewPlace");
         changeConnection.setId("btnChangeConnection");
-        newPlace.setId("btnNewConnection");
+        newConnection.setId("btnNewConnection");
         buttons.setAlignment(Pos.CENTER);
         //buttons.setPadding(new Insets(5));
         buttons.setHgap(5);
@@ -194,6 +208,7 @@ public class PathFinder extends Application {
             }
         });
         stage.show();
+
     }
     private void displayPath() {
         PathInterface pi = new PathInterface(p1,p2, this);
@@ -220,6 +235,7 @@ public class PathFinder extends Application {
                 ConnectionInterface.PlaceResult pr = res.get();
                 locationGraph.connect(p1, p2, pr.getName(), pr.getTime());
                 ConnectionLine c = new ConnectionLine(p1.getCenterX(), p1.getCenterY(), p2.getCenterX(), p2.getCenterY());
+                c.setDisable(true);
                 center.getChildren().add(c);
                 changed = true;
             }
@@ -240,7 +256,7 @@ public class PathFinder extends Application {
     private class PlaceClickedHandler implements EventHandler<MouseEvent> {
         @Override
         public void handle(MouseEvent event) {
-            Place p = (Place)event.getSource();
+            var p = (Place) event.getSource();
             if (p == p1) {
                 p1.paintUnselected();
                 p1 = null;
@@ -248,11 +264,10 @@ public class PathFinder extends Application {
                 p2.paintUnselected();
                 p2 = null;
             } else {
-                if(p1 == null) {
+                if (p1 == null) {
                     p1 = p;
                     p.paintSelected();
-                }
-                else if(p2 == null) {
+                } else if (p2 == null) {
                     p2 = p;
                     p.paintSelected();
                 }
@@ -262,14 +277,19 @@ public class PathFinder extends Application {
     private class NewPlaceHandler implements EventHandler<MouseEvent> {
         @Override
         public void handle(MouseEvent event) {
+            if(!allowClicks) {
+                return;
+            }
             double x = event.getX();
             double y = event.getY();
             newPlace(x,y);
             scene.setCursor(Cursor.DEFAULT);
             newPlace.setDisable(false);
-            center.setOnMouseClicked(null);
+            allowClicks = false;
+
         }
     }
+
     private void newPlace(double x, double y) {
         TextInputDialog tid = new TextInputDialog();
         tid.setHeaderText(null);
@@ -282,17 +302,23 @@ public class PathFinder extends Application {
         okButton.setDisable(tf.getText().trim().isEmpty());
         Optional<String> res =  tid.showAndWait();
         if(res.isPresent()) {
-            Place p =  new Place(x,y,tid.getEditor().getText());
-            p.setOnMouseClicked(new PlaceClickedHandler());
-            center.getChildren().addAll(p.getDisplay());
-            locationGraph.add(p);
-            p.setId(p.getName());
+            createNewPlace(tid.getEditor().getText(),x,y);
             changed = true;
         }
-    }
 
+    }
+    private Place createNewPlace(String name, double x, double y) {
+        Place p =  new Place(x,y, name);
+        p.setId(p.getName());
+        Text text = new Text(p.getX()+5,p.getY()+20,p.getName());
+        text.setDisable(true);
+        text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        center.getChildren().addAll(p,text);
+        p.setOnMouseClicked(new PlaceClickedHandler());
+        locationGraph.add(p);
+        return p;
+    }
     private void openFile(String fileName) {
-        locationGraph = new ListGraph<>();
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
             String mapData = reader.readLine();
@@ -303,11 +329,7 @@ public class PathFinder extends Application {
                 String name = data[i];
                 double x = Double.parseDouble(data[i+1]);
                 double y = Double.parseDouble(data[i+2]);
-                Place p = new Place(x,y,name);
-                p.setOnMouseClicked(new PlaceClickedHandler());
-                locationGraph.add(p);
-                p.setId(p.getName());
-                center.getChildren().add(p.getDisplay());
+                createNewPlace(name,x,y);
             }
             String line;
             while ((line = reader.readLine()) != null){
@@ -323,7 +345,9 @@ public class PathFinder extends Application {
                 }
                 if(locationGraph.getEdgeBetween(from,to) == null) {
                     locationGraph.connect(from, to, edgeData[2], Integer.parseInt(edgeData[3]));
-                    center.getChildren().add(new ConnectionLine(from.getCenterX(),from.getCenterY(),to.getCenterX(),to.getCenterY()));
+                    ConnectionLine c = new ConnectionLine(from.getCenterX(),from.getCenterY(),to.getCenterX(),to.getCenterY());
+                    c.setDisable(true);
+                    center.getChildren().add(c);
                 }
             }
             reader.close();
@@ -338,18 +362,22 @@ public class PathFinder extends Application {
         }
     }
     private void openImage(String image) {
+        p1 = null;
+        p2 = null;
         center.getChildren().clear();
+        locationGraph = new ListGraph<>();
         map = new Image(image);
         ImageView imageView = new ImageView(map);
         imageView.setLayoutX(0);
         imageView.setLayoutY(0);
+        imageView.setMouseTransparent(true);
         center.getChildren().add(imageView);
         stage.setWidth(map.getWidth()+20);
         stage.setHeight(map.getHeight()+sceneHeight+40);
     }
     private void saveLocationMap(ActionEvent event) {
         try{
-            //todo change output file later
+
             if(map != null) {
                 BufferedWriter writer = new BufferedWriter(new FileWriter("saveTest.txt"));
                 writer.write(map.getUrl()+"\n");
